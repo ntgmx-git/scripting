@@ -1,0 +1,5 @@
+### Listening
+exec 4<>/dev/tcp/ip/port
+while read -u 4 line; do echo "Received: $line"; done
+exec 4>&-
+exec 4<&-
