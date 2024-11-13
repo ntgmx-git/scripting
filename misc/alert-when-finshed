@@ -8,9 +8,10 @@
 #
 # Requirements (in the current state): alsa-utils, libnotify.
 # 
-# Usage: [...] && ~/alert-when-finished "TASK-NAME"
-
+# Usage (only if the command is successful): [...] && ~/alert-script "TASK-NAME"
+# Usage for both successful & unsuccessful command: [...] && alert-script "TASKE DONE" || alert-script "TASK FAILED" 
 task="$1"
-/usr/bin/notify-send "$1 DONE"
+/usr/bin/notify-send "$1"
 /usr/bin/aplay /usr/share/sounds/speech-dispatcher/test.wav
+
 
