@@ -1,0 +1,16 @@
+#!/bin/bash
+# 
+# Script to send a notification and sound when the previous command is finished. 
+# 
+# You can use another method to play the sound, use another notification sound or the popup method by using your own locations / commands. Also check that command paths are adapted to your system.
+#
+# This can be very handy when manipulating multiple shells at once during various operations such as file transfert, disk utilities, scans, enumeration & bruteforce tools...
+#
+# Requirements (in the current state): alsa-utils, libnotify.
+# 
+# Usage: [...] && ~/alert-when-finished "TASK-NAME"
+
+task="$1"
+/usr/bin/notify-send "$1 DONE"
+/usr/bin/aplay /usr/share/sounds/speech-dispatcher/test.wav
+
