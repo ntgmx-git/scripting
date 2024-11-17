@@ -1,0 +1,28 @@
+#!/bin/bash
+# A small script to get the the network speed in bytes from ip -s. 
+# 
+# Works for one interface up. Else, just add an argument or specfify the interface name direclty.
+# 
+# Here the speed is given in bytes/seconds. It can be changed as uncommenting the two lines. 
+# TODO 
+# 1° Add management for multiple intefaces. Default behavior being display all speeds. 
+# 2° Add argument management to specify the interface.
+# 3° Add arg management to specify the displayed speed.
+interface="$(ip a | grep "state UP" | cut -d " " -f2 | cut -d: -f1)"
+step=5
+
+TX1="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
+RX1="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
+sleep 5 
+
+TX2="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
+RX2="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
+
+RX=$(($RX2-$RX1))
+RX=$(($RX/$step))
+#RX=$(($RX/104576))
+TX=$(($TX2-$TX1))
+TX=$(($TX/$step))
+#X=$(($TX/1048576))
+
+echo "TX: ${TX} bytes/s RX: ${RX} bytes/s"
