@@ -82,7 +82,7 @@ function main(){
 		echo $temp_sshd_fail2ban | tput_section $fail2ban_start 0 "fail2ban sshd" # DISPLAY
 
 		if [[ "$left_timestamp" == "3" ]]; then
-			tput_clear
+			tput clear
 			left_timestamp=0
 		else
 			clear_tput_right
