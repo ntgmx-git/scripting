@@ -51,10 +51,17 @@ function main(){
 	temp_cpu=$(mktemp) && TRASH="$(echo $temp_cpu) $TRASH"
 	temp_users_connected=$(mktemp) && TRASH="$(echo $temp_users_connected) $TRASH"
 	temp_journalctl=$(mktemp) && TRASH="$(echo $temp_journalctl) $TRASH"
-	temp_sshd_fail2ban=$(mktemp) && TRASH="$(echo $temp_journalctl) $TRASH"
+	temp_sshd_fail2ban=$(mktemp) && TRASH="$(echo $temp_sshd_fail2ban) $TRASH"
 
 	left_timestamp=0
 	while true; do
+		if [[ "$left_timestamp" == "3" ]]; then
+			tput clear
+			left_timestamp=0
+		else
+			clear_tput_right
+		fi
+
 		left_timestamp=$(( left_timestamp + 1))
 		# Rows and cols, but actualizing them in case of change in screen dims.
 		ROWS=$(tput lines)
@@ -70,23 +77,19 @@ function main(){
 		df -h | grep "^/dev/" >> "$temp_disk" # disk storage 
 		cat $temp_disk | tput_section 0 0 "DISK USAGE" # DISPLAY
 		
-		# Part 2 Bottom left 
+		# Part 2 left 
 		middle_lstart=$(( $(wc -l < "$temp_disk") + 2 ))	
 		last --ip | head -n 10 | cut -c 1-$MIDC > "$temp_users_connected"
-		cat $temp_users_connected | cut -c 1-$MIDC | tput_section $middle_lstart 0 "LAST LOGIN" # DISPLAY
+		cat $temp_users_connected | tput_section $middle_lstart 0 "LAST LOGIN" # DISPLAY
 
+		# Part 3 left 
 		# Remove this section if you do not want to sudo
 		users_connected_lines=$(wc -l < "$temp_users_connected")
-		fail2ban_start=$(( user_connected_lines + 2 ))
+		fail2ban_start=$(( user_connected_lines + middle_lstart + 12 ))
 		sudo fail2ban-client status sshd > "$temp_sshd_fail2ban"
-		echo $temp_sshd_fail2ban | tput_section $fail2ban_start 0 "fail2ban sshd" # DISPLAY
+		cat $temp_sshd_fail2ban | tput_section $fail2ban_start 0 "fail2ban sshd" # DISPLAY
 
-		if [[ "$left_timestamp" == "3" ]]; then
-			tput clear
-			left_timestamp=0
-		else
-			clear_tput_right
-		fi
+
 		# Top right 
 		top -bn1 | grep "Cpu(s" | awk '{print "CPU:" $2 + $4 "%"}' > "$temp_cpu"
 		middle_right=$(( $(cat $temp_cpu | wc -l) + 2 )) 
