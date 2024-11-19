@@ -1,8 +1,7 @@
 #!/bin/bash
 # VERSION=1.0
-# Two columns are present, on the left some not often actualized data and often actualized data on the right (
+# Two columns are present, on the left some not often actualized data and often actualized data on the right. 
 # TODO
-# - add fail2ban sshd status
 
 trap 'cleanup' SIGINT
 TRASH=""
@@ -12,15 +11,6 @@ function cleanup(){
 	exit 0
 }
 
-function r_listener(){
-	# Key listener function
-	while true; do
-		read -n 1 -s key  # Read a single character silently
-		if [[ $key == "R" || $key == "r" ]]; then
-			tput clear  # Set refresh flag
-		fi
-	done
-}
 ### tput_section 
 # function that really wrap the content of one input into one "section". Avoid the EOL return of classical inputs below a "tput cup" call.
 # Arg1: starting row
@@ -61,10 +51,11 @@ function main(){
 	temp_cpu=$(mktemp) && TRASH="$(echo $temp_cpu) $TRASH"
 	temp_users_connected=$(mktemp) && TRASH="$(echo $temp_users_connected) $TRASH"
 	temp_journalctl=$(mktemp) && TRASH="$(echo $temp_journalctl) $TRASH"
+	temp_sshd_fail2ban=$(mktemp) && TRASH="$(echo $temp_journalctl) $TRASH"
 
-	message="Please print R to actualize left pane data."
-	r_listener &
+	left_timestamp=0
 	while true; do
+		left_timestamp=$(( left_timestamp + 1))
 		# Rows and cols, but actualizing them in case of change in screen dims.
 		ROWS=$(tput lines)
 		COLS=$(tput cols)
@@ -78,19 +69,24 @@ function main(){
 		df -h | head -n 1 >> "$temp_disk" # header storage
 		df -h | grep "^/dev/" >> "$temp_disk" # disk storage 
 		cat $temp_disk | tput_section 0 0 "DISK USAGE" # DISPLAY
-
+		
 		# Part 2 Bottom left 
 		middle_lstart=$(( $(wc -l < "$temp_disk") + 2 ))	
 		last --ip | head -n 10 | cut -c 1-$MIDC > "$temp_users_connected"
 		cat $temp_users_connected | cut -c 1-$MIDC | tput_section $middle_lstart 0 "LAST LOGIN" # DISPLAY
 
-		# Bottom left part
+		# Remove this section if you do not want to sudo
 		users_connected_lines=$(wc -l < "$temp_users_connected")
-		message_start=$((middle_lstart + users_connected_lines))
-		echo $message | tput_section $message_start 0 "info" # DISPLAY
+		fail2ban_start=$(( user_connected_lines + 2 ))
+		sudo fail2ban-client status sshd > "$temp_sshd_fail2ban"
+		echo $temp_sshd_fail2ban | tput_section $fail2ban_start 0 "fail2ban sshd" # DISPLAY
 
-		# ############################################ #
-		clear_tput_right
+		if [[ "$left_timestamp" == "3" ]]; then
+			tput_clear
+			left_timestamp=0
+		else
+			clear_tput_right
+		fi
 		# Top right 
 		top -bn1 | grep "Cpu(s" | awk '{print "CPU:" $2 + $4 "%"}' > "$temp_cpu"
 		middle_right=$(( $(cat $temp_cpu | wc -l) + 2 )) 
