@@ -1,0 +1,6 @@
+### For ip range
+for ((ip=1; ip<=254; ip++)); do /bin/bash -c "</dev/tcp/XXX.XXX.XXX.$ip/80 && echo host $ip is up || $ip host is down > /dev/null" 2>/dev/null || echo Connection timeout > /dev/null; done
+
+### Same principle for port scanning: 
+for ((port=1; port<=LASTPORT; port++)); do /bin/bash -c "</dev/tcp/TARGET_IP/$port && echo $port is open || $port is closed > /dev/null" 2>/dev/null || echo Connection timeout > /dev/null; done
+
