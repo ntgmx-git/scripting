@@ -1,9 +1,0 @@
-### ls -la like
-```bash
-shopt -s dotglob; for file in *;do echo $file ; done
-```
-
-### ls like
-```bash
-for file in /path/to/folder/*; do echo $file; done 
-```
