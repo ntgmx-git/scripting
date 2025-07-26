@@ -1,28 +1,49 @@
 #!/bin/bash
+VERSION=2
 # A small script to get the the network speed in bytes from ip -s. 
 # 
 # Works for one interface up. Else, just add an argument or specfify the interface name direclty.
 # 
-# Here the speed is given in bytes/seconds. It can be changed as uncommenting the two lines. 
-# TODO 
 # 1° Add management for multiple intefaces. Default behavior being display all speeds. 
 # 2° Add argument management to specify the interface.
 # 3° Add arg management to specify the displayed speed.
-interface="$(ip a | grep "state UP" | cut -d " " -f2 | cut -d: -f1)"
-step=5
+function _calc(){
+	step="$2"
+	interface="$1"
+	if [[ -z $step ]]; then
+		step=2
+	fi
+	if [[ -z $interface ]]; then 
+		interface="$(ip a | grep "state UP" | cut -d " " -f2 | cut -d: -f1|head -n 1)"
+	fi
+	TX1="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
+	RX1="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
+	sleep $step
+	TX2="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
+	RX2="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
+	RX=$(($RX2-$RX1))
+	RX=$(($RX/$step))
+	TX=$(($TX2-$TX1))
+	TX=$(($TX/$step))
+	clear && echo "$interface: TX: ${TX} bytes/s RX: ${RX} bytes/s"
+}
 
-TX1="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
-RX1="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
-sleep 5 
+function main(){
+	interface="$1"
+	step="$2"
+	if [[ "$1" == "--help" ]]; then 
+		echo "usage:
+		./script <interface> <step>
+		- interface: interface name.
+		- step: step in seconds.
+		Defaults: the first interface with 'state UP' given by the command 'ip a', and a two seconds step."
+		exit 1
+	fi
+	while true; do 
+		_calc "$interface" "$step"
+	done	
+	}
+main "$1" "$2"
 
-TX2="$(ip -s link show $interface | grep -A 1 "RX" | grep -v RX | awk '{print $1}')"
-RX2="$(ip -s link show $interface | grep -A 1 "TX" | grep -v TX | awk '{print $1}')"
 
-RX=$(($RX2-$RX1))
-RX=$(($RX/$step))
-#RX=$(($RX/104576))
-TX=$(($TX2-$TX1))
-TX=$(($TX/$step))
-#X=$(($TX/1048576))
-
-echo "TX: ${TX} bytes/s RX: ${RX} bytes/s"
+	
