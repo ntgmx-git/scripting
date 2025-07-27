@@ -1,0 +1,24 @@
+# Commands to make nextcloud backup with little tools available. 
+VERSION=1.0
+
+# Encryption on transfert (ssh) and at rest (symmetric gpg - asks for a password each time).
+
+# Here, CLOUD and BAK designs nextcloud host and backup server host, both configured with a ssh key. 
+
+# Here, a full backup is made of the folder. Change arguments if you need incremental backups. 
+
+# Setup maintenance mode
+ssh CLOUD "sudo -E -u www-data php /var/www/html/nextcloud/occ maintenance:mode --on"
+
+# watch backup folder
+ssh BAK "cd /path/to/backup; clear; while true; do pwd && ls -alFh && sleep 2 && clear; done"
+
+# Archive, encrypt, transfert folder
+ssh CLOUD "tar --create --gzip --one-file-system --preserve-permissions --xattrs --acls --verbose -f - /var/www/html/nextcloud" | gpg --symmetric --cipher-algo AES256 | ssh BAK "cat > /path/to/backup/$(date +%F)-nextcloud-folders.tar.gz.gpg"
+
+# Dump, encrypt mysql database
+ssh CLOUD "mysqldump --single-transaction --default-character-set=utf8mb4 -h <SERVER> -u <USER> -p<password> nextcloud" | gpg --symmetric --cipher-algo AES256 | ssh BAK "cat > /path/to/backup/$(date +%F)-nextcloud-mysqldump.gpg"
+
+# Remove maintenance mode
+ssh CLOUD "sudo -E -u www-data php /var/www/html/nextcloud/occ maintenance:mode --off"
+
